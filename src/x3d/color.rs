@@ -38,7 +38,37 @@ impl ops::Mul<f32> for Color {
                 self.data[0] * rhs,
                 self.data[1] * rhs,
                 self.data[2] * rhs,
-                self.data[3] * rhs,
+                self.data[3],
+            ],
+        }
+    }
+}
+
+impl ops::Mul<Color> for Color {
+    type Output = Color;
+
+    fn mul(self, rhs: Color) -> Color {
+        Color {
+            data: [
+                self.data[0] * rhs.data[0],
+                self.data[1] * rhs.data[1],
+                self.data[2] * rhs.data[2],
+                self.data[3] * rhs.data[3],
+            ],
+        }
+    }
+}
+
+impl ops::Add<Color> for Color {
+    type Output = Color;
+
+    fn add(self, rhs: Color) -> Color {
+        Color {
+            data: [
+                self.data[0] + rhs.data[0],
+                self.data[1] + rhs.data[1],
+                self.data[2] + rhs.data[2],
+                self.data[3] + rhs.data[3],
             ],
         }
     }

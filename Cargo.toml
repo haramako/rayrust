@@ -5,3 +5,4 @@ authors = ["HARADA Makoto <harada@toydea.com>"]
 
 [dependencies]
 image = "*"
+rand = "*"
