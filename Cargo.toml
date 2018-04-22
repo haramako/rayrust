@@ -1,0 +1,7 @@
+[package]
+name = "rayrust"
+version = "0.1.0"
+authors = ["HARADA Makoto <harada@toydea.com>"]
+
+[dependencies]
+image = "*"
