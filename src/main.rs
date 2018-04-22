@@ -4,6 +4,7 @@ mod x3d;
 use image::{ImageBuffer, Rgba};
 use std::path::Path;
 use std::cmp::Ordering;
+use std::f32;
 
 use x3d::*;
 
@@ -32,16 +33,40 @@ fn main() {
         image::Rgba([0u8, 0u8, 0u8, 255u8])
     });
 
-    let mut s1 = Entity::new(Vec3::xyz(0.0, 0.0, 0.0), Box::new(Sphere::new(0.5)));
-    s1.material.emission = Color::from_rgba(1.0, 1.0, 1.0, 1.0);
+    let mut s1 = Entity::new(Mat4::identity(), Box::new(Sphere::new(0.5)));
+    s1.material.emission = Color::from_rgb(1.0, 1.0, 1.0);
     scene.objects.push(Box::new(s1));
 
-    let s3 = Entity::new(Vec3::xyz(0.2, 0.3, 0.3), Box::new(Sphere::new(0.7)));
+    let s3 = Entity::new(Mat4::translate(0.2, 0.3, 0.2), Box::new(Sphere::new(0.7)));
     scene.objects.push(Box::new(s3));
 
-    let mut r1 = Entity::new(Vec3::xyz(0.0, 0.0, 0.4), Box::new(Rect::new()));
-    r1.material.emission = Color::from_rgba(1.0, 1.0, 0.0, 1.0);
-    scene.objects.push(Box::new(r1));
+    let mut floor = Entity::new(
+        Mat4::translate(0.0, 0.8, 0.0) * Mat4::rotate_x(-90.0),
+        Box::new(Rect::new()),
+    );
+    floor.material.emission = Color::white();
+    scene.objects.push(Box::new(floor));
+
+    let mut w_back = Entity::new(
+        Mat4::translate(0.0, 0.0, 0.8) * Mat4::rotate_x(0.0),
+        Box::new(Rect::new()),
+    );
+    w_back.material.emission = Color::from_rgb(1.0, 1.0, 1.0);
+    scene.objects.push(Box::new(w_back));
+
+    let mut w_right = Entity::new(
+        Mat4::translate(0.8, 0.0, 0.0) * Mat4::rotate_y(-90.0),
+        Box::new(Rect::new()),
+    );
+    w_right.material.emission = Color::from_rgb(1.0, 0.0, 0.0);
+    scene.objects.push(Box::new(w_right));
+
+    let mut w_left = Entity::new(
+        Mat4::translate(-0.8, 0.0, 0.0) * Mat4::rotate_y(90.0),
+        Box::new(Rect::new()),
+    );
+    w_left.material.emission = Color::from_rgb(0.0, 1.0, 0.0);
+    scene.objects.push(Box::new(w_left));
 
     let scene = scene;
 

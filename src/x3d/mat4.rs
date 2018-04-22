@@ -46,24 +46,102 @@ impl Mat4 {
     }
 
     pub fn rotate_x(angle: f32) -> Mat4 {
+        let a = f32::consts::PI * angle / 180.0;
         Mat4::from_vec(&[
             1.0,
             0.0,
             0.0,
             0.0,
             0.0,
-            f32::cos(angle),
-            -f32::sin(angle),
+            f32::cos(a),
+            -f32::sin(a),
             0.0,
             0.0,
-            f32::sin(angle),
-            f32::cos(angle),
+            f32::sin(a),
+            f32::cos(a),
             0.0,
             0.0,
             0.0,
             0.0,
             1.0,
         ])
+    }
+
+    pub fn rotate_y(angle: f32) -> Mat4 {
+        let a = f32::consts::PI * angle / 180.0;
+        Mat4::from_vec(&[
+            f32::cos(a), // 0
+            0.0,
+            f32::sin(a),
+            0.0,
+            0.0, // 1
+            1.0,
+            0.0,
+            0.0,
+            -f32::sin(a), // 2
+            0.0,
+            f32::cos(a),
+            0.0,
+            0.0, // 3
+            0.0,
+            0.0,
+            1.0,
+        ])
+    }
+
+    pub fn rotate_z(angle: f32) -> Mat4 {
+        let a = f32::consts::PI * angle / 180.0;
+        Mat4::from_vec(&[
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            f32::cos(a),
+            -f32::sin(a),
+            0.0,
+            0.0,
+            f32::sin(a),
+            f32::cos(a),
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ])
+    }
+
+    pub fn translate(x: f32, y: f32, z: f32) -> Mat4 {
+        Mat4::from_vec(&[
+            1.0, // 0
+            0.0,
+            0.0,
+            x,
+            0.0, // 1
+            1.0,
+            0.0,
+            y,
+            0.0, // 2
+            0.0,
+            1.0,
+            z,
+            0.0, // 3
+            0.0,
+            0.0,
+            1.0,
+        ])
+    }
+
+    pub fn without_translate(&self) -> Mat4 {
+        let mut r = Mat4::from_vec(&self.v);
+        r.v[0 * 4 + 3] = 0.0;
+        r.v[1 * 4 + 3] = 0.0;
+        r.v[2 * 4 + 3] = 0.0;
+        r.v[3 * 4 + 0] = 0.0;
+        r.v[3 * 4 + 1] = 0.0;
+        r.v[3 * 4 + 2] = 0.0;
+        r.v[3 * 4 + 3] = 1.0;
+        r
     }
 }
 
@@ -128,9 +206,10 @@ impl ops::Mul<Vec3> for Mat4 {
         let mut r = Vec3::new();
         for n in 0..3usize {
             let mut x = 0.0;
-            for i in 0..4usize {
-                x += self.get(i as i32, n as i32) * rhs[i]
+            for i in 0..3usize {
+                x += self.get(i as i32, n as i32) * rhs[i];
             }
+            x += self.get(3, n as i32);
             r[n] = x
         }
         r
