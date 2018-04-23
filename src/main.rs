@@ -5,10 +5,10 @@ extern crate rand;
 mod x3d;
 
 use image::{ImageBuffer, Rgba};
-use std::path::Path;
+use rand::Rng;
 use std::cmp::Ordering;
 use std::f32;
-use rand::Rng;
+use std::path::Path;
 
 use x3d::*;
 
