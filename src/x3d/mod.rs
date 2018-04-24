@@ -1,14 +1,18 @@
+extern crate cgmath;
+
 mod color;
-mod mat4;
 mod material;
 mod ray;
 mod rect;
 mod scene;
 mod sphere;
-mod vec3;
 
-pub type Vec3 = vec3::Vec3;
-pub type Mat4 = mat4::Mat4;
+pub use x3d::cgmath::prelude::*;
+pub use x3d::cgmath::*;
+
+pub type Point = cgmath::Point3<f32>;
+pub type Vec3 = cgmath::Vector3<f32>;
+pub type Mat4 = cgmath::Matrix4<f32>;
 pub type Ray = ray::Ray;
 pub type Shape = scene::Shape;
 pub type Sphere = sphere::Sphere;
