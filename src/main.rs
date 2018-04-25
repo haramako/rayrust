@@ -3,20 +3,26 @@ extern crate cgmath;
 extern crate getopts;
 extern crate image;
 extern crate rand;
+extern crate rayon;
 
 mod x3d;
 
 use getopts::Options;
 use image::{ImageBuffer, Rgba};
 use rand::Rng;
+use rayon::prelude::*;
 use std::cmp::Ordering;
 use std::path::Path;
 use std::{env, f32};
 use x3d::*;
 
+#[derive(Copy, Clone)]
+struct RenderParam {
+    pub min_rad: f32,
+}
+
 struct State {
     pub rng: Box<rand::Rng>,
-    pub min_rad: f32,
 }
 
 fn main() {
@@ -49,9 +55,8 @@ fn main() {
     let size = read_opt(&matches, "s", 32);
     let quarity = read_opt(&matches, "q", 5);
 
-    let mut stat = State {
+    let param = RenderParam {
         min_rad: (0.3f32).powf(quarity as f32),
-        rng: Box::new(rand::StdRng::new().expect("StdRng::new() error.")),
     };
 
     let w: i32 = size;
@@ -63,23 +68,66 @@ fn main() {
 
     let scene = make_scene();
 
-    for _y in 0..h {
-        for _x in 0..w {
-            let x = ((_x - w / 2) as f32) / (w as f32);
-            let y = ((_y - h / 2) as f32) / (h as f32);
-            let ray = Ray::new(Point3::new(0.0, 0.0, -2.0), vec3(x, y, 1.0).normalize());
-            let color = render(&mut stat, &ray, 1.0, &scene);
-            //println!("{:?} {:?}", ray.dir, color);
-            img[(_x as u32, _y as u32)] = color
-                .map(|c| color_to_rgba(&c))
-                .unwrap_or(Rgba([0, 0, 0, 255]));
-        }
-        if _y % 10 == 0 {
-            println!("{}", _y);
+    let bsize = 32;
+    let xx = (0..h / bsize)
+        .flat_map(move |y| (0..w / bsize).map(move |x| (y, x)))
+        .collect::<Vec<(i32, i32)>>();
+
+    let xx = xx.par_iter()
+        .map(|(bx, by)| {
+            let buf = render_block(
+                &param,
+                &scene,
+                bx * bsize,
+                by * bsize,
+                bsize as usize,
+                bsize as usize,
+                w as usize,
+                h as usize,
+            );
+            println!("render {:?}", (bx, by));
+            ((bx, by, buf))
+        })
+        .collect::<Vec<_>>();
+
+    for (bx, by, buf) in xx.iter() {
+        for (dy, row) in buf.iter().enumerate() {
+            for (dx, color) in row.iter().enumerate() {
+                let ix = (*bx * bsize) as u32 + dx as u32;
+                let iy = (*by * bsize) as u32 + dy as u32;
+                img[(ix, iy)] = color_to_rgba(color);
+            }
         }
     }
 
     img.save(Path::new("test.png")).unwrap();
+}
+
+fn render_block(
+    param: &RenderParam,
+    scene: &Scene,
+    sx: i32,
+    sy: i32,
+    w: usize,
+    h: usize,
+    total_w: usize,
+    total_h: usize,
+) -> Vec<Vec<Color>> {
+    let mut stat = State {
+        rng: Box::new(rand::StdRng::new().expect("StdRng::new() error.")),
+    };
+
+    let mut buf = (0..h).map(|_| vec![Color::new(); w]).collect::<Vec<_>>();
+    for _y in 0..(h as i32) {
+        for _x in 0..(w as i32) {
+            let x = ((sx + _x - (total_w as i32) / 2) as f32) / (total_w as f32);
+            let y = ((sy + _y - (total_h as i32) / 2) as f32) / (total_h as f32);
+            let ray = Ray::new(Point3::new(0.0, 0.0, -2.0), vec3(x, y, 1.0).normalize());
+            let color = render(&param, &mut stat, &ray, 1.0, &scene);
+            buf[_y as usize][_x as usize] = color.unwrap_or(Color::from_rgb(1.0, 0.0, 0.0));
+        }
+    }
+    buf
 }
 
 fn make_scene() -> Scene {
@@ -192,7 +240,13 @@ fn random_vector(rng: &mut Box<rand::Rng>, v: Vec3) -> Vec3 {
     }
 }
 
-fn render(stat: &mut State, ray: &Ray, rad: f32, scene: &Scene) -> Option<Color> {
+fn render(
+    param: &RenderParam,
+    stat: &mut State,
+    ray: &Ray,
+    rad: f32,
+    scene: &Scene,
+) -> Option<Color> {
     let hit = rayhit(ray, scene);
     hit.map(|h| {
         let mat = &h.entity.material;
@@ -207,14 +261,14 @@ fn render(stat: &mut State, ray: &Ray, rad: f32, scene: &Scene) -> Option<Color>
         let normal = (h.entity.matrix.transform_vector(local_normal)).normalize();
 
         let mut albedo = Color::new();
-        if rad > stat.min_rad {
-            let div = ((rad / stat.min_rad) as i32).min(64).max(2);
+        if rad > param.min_rad {
+            let div = ((rad / param.min_rad) as i32).min(32).max(2);
             let div_rad = rad / (div as f32);
 
             for _ in 0..div {
                 let rand_vec = random_vector(&mut stat.rng, normal);
                 let next_ray = Ray::new(at, rand_vec);
-                render(stat, &next_ray, div_rad, scene).map(|c| {
+                render(param, stat, &next_ray, div_rad, scene).map(|c| {
                     albedo = albedo + c;
                 });
             }

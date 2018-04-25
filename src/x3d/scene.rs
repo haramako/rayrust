@@ -49,7 +49,7 @@ impl Entity {
     }
 }
 
-pub trait Shape: fmt::Debug {
+pub trait Shape: fmt::Debug + Sync {
     fn ray_cast<'a, 'b>(&self, entity: &'b Entity, ray: &'a Ray) -> Option<RayHit<'b>>;
     fn normal(&self, position: Point) -> Vec3;
 }
