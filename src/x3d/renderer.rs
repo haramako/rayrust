@@ -1,6 +1,6 @@
 extern crate rand;
 
-use rand::Rng;
+use rand::prelude::*;
 use std::cmp::Ordering;
 use x3d::*;
 
@@ -10,11 +10,11 @@ pub struct RenderParam {
 }
 
 pub struct State {
-    pub rng: Box<rand::Rng>,
+    pub rng: Box<rand::rngs::StdRng>,
 }
 
 /// 特定のVectorからランダムな反射方向を取得する
-fn random_vector(rng: &mut Box<rand::Rng>, v: Vec3) -> Vec3 {
+fn random_vector(rng: &mut Box<rand::rngs::StdRng>, v: Vec3) -> Vec3 {
     loop {
         let x = rng.gen_range(-1.0, 1.0);
         let y = rng.gen_range(-1.0, 1.0);
@@ -38,7 +38,7 @@ pub fn render_block(
     total_h: usize,
 ) -> Vec<Vec<Color>> {
     let mut stat = State {
-        rng: Box::new(rand::StdRng::new().expect("StdRng::new() error.")),
+        rng: Box::new(rand::rngs::StdRng::from_rng(thread_rng()).expect("StdRng::new() error.")),
     };
 
     let mut buf = (0..h).map(|_| vec![Color::new(); w]).collect::<Vec<_>>();
